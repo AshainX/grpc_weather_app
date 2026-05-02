@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package weather;
+
+// Weather data message
+message WeatherRequest {
+    string city = 1;
+    string country_code = 2;  // ISO 3166-1 alpha-2 format (e.g., "US", "GB")
+}
+
+message WeatherResponse {
+    string city = 1;
+    string country = 2;
+    double temperature = 3;      // Celsius
+    double feels_like = 4;       // Celsius
+    int32 humidity = 5;          // Percentage
+    string description = 6;
+    string icon = 7;
+    double wind_speed = 8;        // meters/sec
+    int32 pressure = 9;          // hPa
+    int64 sunrise = 10;          // Unix timestamp
+    int64 sunset = 11;           // Unix timestamp
+    string timezone = 12;        // Offset in seconds from UTC
+}
+
+message ForecastRequest {
+    string city = 1;
+    string country_code = 2;
+    int32 days = 3;             // 1-5 days forecast
+}
+
+message ForecastDay {
+    string date = 1;
+    double temp_min = 2;
+    double temp_max = 3;
+    double temp_avg = 4;
+    string description = 5;
+    string icon = 6;
+}
+
+message ForecastResponse {
+    string city = 1;
+    string country = 2;
+    repeated ForecastDay forecast = 3;
+}
+
+// Weather Service definition
+service WeatherService {
+    // Get current weather for a city
+    rpc GetCurrentWeather(WeatherRequest) returns (WeatherResponse);
+    
+    // Get weather forecast for a city — server streaming; yields one day at a time
+    rpc GetForecast(ForecastRequest) returns (stream ForecastDay);
+}

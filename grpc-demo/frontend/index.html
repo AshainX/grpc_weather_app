@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gRPC Weather Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .weather-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="text-white font-sans p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-2">🌍 gRPC Weather Dashboard</h1>
+            <p class="text-indigo-200">Real-time weather data powered by gRPC & OpenWeatherMap</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-4 mb-8 justify-center">
+            <input type="text" id="cityInput" placeholder="Enter city (e.g. London)" 
+                   class="px-4 py-3 rounded-lg text-gray-800 w-full md:w-64 focus:ring-4 focus:ring-indigo-400 outline-none">
+            <input type="text" id="countryInput" placeholder="Country Code (e.g. GB)" 
+                   class="px-4 py-3 rounded-lg text-gray-800 w-full md:w-32 focus:ring-4 focus:ring-indigo-400 outline-none">
+            <button onclick="fetchWeather()" 
+                    class="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-lg font-bold transition-all transform hover:scale-105 active:scale-95">
+                Get Weather
+            </button>
+        </div>
+
+        <div id="loading" class="hidden text-center mb-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mx-auto"></div>
+            <p class="mt-2">Fetching data from gRPC server...</p>
+        </div>
+
+        <div id="error" class="hidden bg-red-500/50 border border-red-500 text-white p-4 rounded-lg mb-8 text-center"></div>
+
+        <div id="weatherResult" class="hidden space-y-8">
+            <!-- Current Weather -->
+            <div class="weather-card rounded-3xl p-8 text-center shadow-2xl">
+                <h2 id="cityName" class="text-3xl font-bold mb-2">City Name</h2>
+                <div class="flex justify-center items-center mb-4">
+                    <img id="weatherIcon" src="" alt="icon" class="w-24 h-24">
+                    <span id="temp" class="text-6xl font-black ml-4">--°C</span>
+                </div>
+                <p id="description" class="text-xl capitalize mb-6">Description</p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div class="p-4 rounded-2xl bg-white/10">
+                        <i class="fas fa-droplet mb-2 block text-indigo-300"></i>
+                        <p class="text-indigo-200">Humidity</p>
+                        <p id="humidity" class="font-bold text-lg">--%</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/10">
+                        <i class="fas fa-wind mb-2 block text-indigo-300"></i>
+                        <p class="text-indigo-200">Wind</p>
+                        <p id="wind" class="font-bold text-lg">-- m/s</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/10">
+                        <i class="fas fa-temperature-half mb-2 block text-indigo-300"></i>
+                        <p class="text-indigo-200">Feels Like</p>
+                        <p id="feelsLike" class="font-bold text-lg">--°C</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/10">
+                        <i class="fas fa-gauge-high mb-2 block text-indigo-300"></i>
+                        <p class="text-indigo-200">Pressure</p>
+                        <p id="pressure" class="font-bold text-lg">-- hPa</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forecast -->
+            <div>
+                <h3 class="text-2xl font-bold mb-4 px-2">5-Day Forecast</h3>
+                <div id="forecastGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                    <!-- Forecast cards injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchWeather() {
+            const city = document.getElementById('cityInput').value;
+            const country = document.getElementById('countryInput').value;
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const resultDiv = document.getElementById('weatherResult');
+
+            if (!city) {
+                alert('Please enter a city name');
+                return;
+            }
+
+            loading.classList.remove('hidden');
+            errorDiv.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+
+            try {
+                // 1. Fetch Current Weather
+                const weatherRes = await fetch(`http://localhost:5000/api/weather?city=${city}&country=${country}`);
+                const weatherData = await weatherRes.json();
+
+                if (!weatherRes.ok) throw new Error(weatherData.error || 'Failed to fetch weather');
+
+                // Update UI
+                document.getElementById('cityName').textContent = `${weatherData.city}, ${weatherData.country}`;
+                document.getElementById('temp').textContent = `${Math.round(weatherData.temp)}°C`;
+                document.getElementById('description').textContent = weatherData.description;
+                document.getElementById('humidity').textContent = `${weatherData.humidity}%`;
+                document.getElementById('wind').textContent = `${weatherData.wind} m/s`;
+                document.getElementById('feelsLike').textContent = `${Math.round(weatherData.feels_like)}°C`;
+                document.getElementById('pressure').textContent = `${weatherData.pressure} hPa`;
+                document.getElementById('weatherIcon').src = `https://openweathermap.org/img/wn/${weatherData.icon}@4x.png`;
+
+                // 2. Fetch Forecast
+                const forecastRes = await fetch(`http://localhost:5000/api/forecast?city=${city}&country=${country}`);
+                const forecastData = await forecastRes.json();
+
+                if (forecastRes.ok) {
+                    const grid = document.getElementById('forecastGrid');
+                    grid.innerHTML = '';
+                    forecastData.forecast.forEach(day => {
+                        grid.innerHTML += `
+                            <div class="weather-card rounded-2xl p-4 text-center shadow-lg">
+                                <p class="text-sm font-medium text-indigo-200 mb-2">${day.date}</p>
+                                <img src="https://openweathermap.org/img/wn/${day.icon}@2x.png" class="w-16 h-16 mx-auto" alt="icon">
+                                <p class="text-xl font-bold">${Math.round(day.temp_avg)}°C</p>
+                                <p class="text-xs text-indigo-100 capitalize">${day.description}</p>
+                                <div class="flex justify-between text-[10px] mt-2 text-indigo-300">
+                                    <span>Min: ${Math.round(day.temp_min)}°</span>
+                                    <span>Max: ${Math.round(day.temp_max)}°</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                resultDiv.classList.remove('hidden');
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

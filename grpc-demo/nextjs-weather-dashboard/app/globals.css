@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    background: #e8d9c4;
+    color: #2a1b12;
+    font-family: var(--font-inter), -apple-system, sans-serif;
+  }
+  body {
+    min-height: 100vh;
+    /* subtle paper grain */
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(107, 58, 26, 0.04) 0, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(42, 27, 18, 0.035) 0, transparent 55%);
+  }
+}
+
+@layer components {
+  /* Card with offset shadow — the signature brutalist block */
+  .brut-card {
+    @apply bg-paperLight border-2 border-ink relative;
+    box-shadow: 6px 6px 0 #6b3a1a;
+  }
+  .brut-card-sm {
+    @apply bg-paperLight border-2 border-ink relative;
+    box-shadow: 3px 3px 0 #6b3a1a;
+  }
+  /* Small uppercase tracked label */
+  .brut-label {
+    @apply font-sans uppercase tracking-[0.15em] font-extrabold text-[10px];
+  }
+  /* Inline pill for key/value metadata chips */
+  .brut-pill {
+    @apply inline-flex items-center gap-1 bg-ink text-paper px-2 py-1
+           font-sans uppercase tracking-[0.12em] font-extrabold text-[10px];
+  }
+  /* Thin horizontal rule in the accent color */
+  .brut-rule {
+    height: 2px;
+    width: 40px;
+  }
+  /* Paper-colored input */
+  .brut-input {
+    @apply bg-paperLight border-2 border-ink px-4 py-3 font-serif italic
+           focus:outline-none placeholder:italic placeholder:text-ink/50;
+  }
+  .brut-input:focus {
+    box-shadow: 3px 3px 0 #6b3a1a;
+  }
+  /* Solid ink button with offset shadow that compresses on press */
+  .brut-btn {
+    @apply bg-ink text-paper border-2 border-ink px-5 py-3
+           font-sans uppercase tracking-[0.18em] font-extrabold text-xs
+           transition-all duration-75;
+    box-shadow: 4px 4px 0 #6b3a1a;
+  }
+  .brut-btn:hover { box-shadow: 6px 6px 0 #6b3a1a; }
+  .brut-btn:active { box-shadow: 1px 1px 0 #6b3a1a; transform: translate(2px, 2px); }
+}
+
+@layer utilities {
+  /* Typewriter entrance: card lands flat first, then the drop-shadow drops in a beat later.
+     Used on forecast cards as each one streams in from the server. */
+  .tw-in {
+    animation:
+      tw-card-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1) both,
+      tw-shadow-drop 140ms cubic-bezier(0.2, 0.7, 0.2, 1) 160ms both;
+  }
+  @keyframes tw-card-in {
+    0%   { opacity: 0; transform: translateX(-8px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes tw-shadow-drop {
+    0%   { box-shadow: 0 0 0 transparent; }
+    100% { box-shadow: 3px 3px 0 #6b3a1a; }
+  }
+
+  /* OWM icons are colorful PNGs; desaturate + darken so they read as ink on paper */
+  .ink-icon {
+    filter: grayscale(1) contrast(1.05) brightness(0.35) sepia(0.25);
+  }
+}
